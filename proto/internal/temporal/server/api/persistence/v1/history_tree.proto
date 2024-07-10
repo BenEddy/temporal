@@ -49,6 +49,8 @@ message HistoryBranch {
 message HistoryBranchRange {
     // BranchId of original branch forked from.
     string branch_id = 1;
+    // Branch token of original branch forked from.
+    bytes branch_token = 4;
     // Beginning node for the range, inclusive.
     int64 begin_node_id = 2;
     // Ending node for the range, exclusive.
