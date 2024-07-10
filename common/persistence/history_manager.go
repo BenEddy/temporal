@@ -79,6 +79,7 @@ func (m *executionManagerImpl) ForkHistoryBranch(
 			if br.GetEndNodeId() >= request.ForkNodeID {
 				newAncestors = append(newAncestors, &persistencespb.HistoryBranchRange{
 					BranchId:    br.GetBranchId(),
+					BranchToken: br.GetBranchToken(),
 					BeginNodeId: br.GetBeginNodeId(),
 					EndNodeId:   request.ForkNodeID,
 				})
@@ -92,6 +93,7 @@ func (m *executionManagerImpl) ForkHistoryBranch(
 		newAncestors = forkBranch.Ancestors
 		newAncestors = append(newAncestors, &persistencespb.HistoryBranchRange{
 			BranchId:    forkBranch.GetBranchId(),
+			BranchToken: request.ForkBranchToken,
 			BeginNodeId: beginNodeID,
 			EndNodeId:   request.ForkNodeID,
 		})
@@ -163,6 +165,7 @@ func (m *executionManagerImpl) DeleteHistoryBranch(
 	brsToDelete := branch.Ancestors
 	brsToDelete = append(brsToDelete, &persistencespb.HistoryBranchRange{
 		BranchId:    branch.GetBranchId(),
+		BranchToken: request.BranchToken,
 		BeginNodeId: GetBeginNodeID(branch),
 	})
 
@@ -255,6 +258,7 @@ func (m *executionManagerImpl) TrimHistoryBranch(
 	}
 	branchAncestors = append(branchAncestors, &persistencespb.HistoryBranchRange{
 		BranchId:    branchID,
+		BranchToken: request.BranchToken,
 		BeginNodeId: beginNodeID,
 		EndNodeId:   maxNodeID,
 	})
@@ -768,6 +772,7 @@ func (m *executionManagerImpl) readRawHistoryBranchAndFilter(
 	}
 	branchAncestors = append(branchAncestors, &persistencespb.HistoryBranchRange{
 		BranchId:    branchID,
+		BranchToken: branchToken,
 		BeginNodeId: beginNodeID,
 		EndNodeId:   maxNodeID,
 	})
@@ -858,6 +863,7 @@ func (m *executionManagerImpl) readRawHistoryBranchReverseAndFilter(
 	}
 	branchAncestors = append(branchAncestors, &persistencespb.HistoryBranchRange{
 		BranchId:    branchID,
+		BranchToken: branchToken,
 		BeginNodeId: beginNodeID,
 		EndNodeId:   maxNodeID,
 	})
