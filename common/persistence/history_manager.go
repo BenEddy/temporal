@@ -669,11 +669,10 @@ func (m *executionManagerImpl) readRawHistoryBranch(
 	if currentBranch.GetEndNodeId() < maxNodeID {
 		maxNodeID = currentBranch.GetEndNodeId()
 	}
-	branchID := currentBranch.GetBranchId()
 	resp, err := m.persistence.ReadHistoryBranch(ctx, &InternalReadHistoryBranchRequest{
-		BranchToken:   branchToken,
+		BranchToken:   currentBranch.GetBranchToken(),
 		ShardID:       shardID,
-		BranchID:      branchID,
+		BranchID:      currentBranch.GetBranchId(),
 		MinNodeID:     minNodeID,
 		MaxNodeID:     maxNodeID,
 		NextPageToken: token.StoreToken,
@@ -728,12 +727,11 @@ func (m *executionManagerImpl) readRawHistoryBranchReverse(
 	if currentBranch.GetEndNodeId() < maxNodeID {
 		maxNodeID = currentBranch.GetEndNodeId()
 	}
-	branchID := currentBranch.GetBranchId()
 
 	resp, err := m.persistence.ReadHistoryBranch(ctx, &InternalReadHistoryBranchRequest{
-		BranchToken:   branchToken,
+		BranchToken:   currentBranch.GetBranchToken(),
 		ShardID:       shardID,
-		BranchID:      branchID,
+		BranchID:      currentBranch.GetBranchId(),
 		MinNodeID:     minNodeID,
 		MaxNodeID:     maxNodeID,
 		NextPageToken: token.StoreToken,
