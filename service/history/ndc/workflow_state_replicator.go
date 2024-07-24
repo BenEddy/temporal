@@ -367,8 +367,10 @@ BackfillLoop:
 		}
 
 		branchID := historyBranch.GetBranchId()
+		ancestorBranchToken := branchToken
 		if sortedAncestorsIdx < len(sortedAncestors) {
 			currentAncestor := sortedAncestors[sortedAncestorsIdx]
+
 			if historyBlob.nodeID >= currentAncestor.GetEndNodeId() {
 				// update ancestor
 				ancestors = append(ancestors, currentAncestor)
@@ -378,6 +380,8 @@ BackfillLoop:
 				// use ancestor branch id
 				currentAncestor = sortedAncestors[sortedAncestorsIdx]
 				branchID = currentAncestor.GetBranchId()
+				ancestorBranchToken = currentAncestor.GetBranchToken()
+
 				if historyBlob.nodeID < currentAncestor.GetBeginNodeId() || historyBlob.nodeID >= currentAncestor.GetEndNodeId() {
 					return common.EmptyEventTaskID, serviceerror.NewInternal(
 						fmt.Sprintf("The backfill history blob node id %d is not in acestoer range [%d, %d]",
@@ -390,7 +394,7 @@ BackfillLoop:
 		}
 
 		filteredHistoryBranch, err := historyBranchUtil.UpdateHistoryBranchInfo(
-			branchToken,
+			ancestorBranchToken,
 			&persistencespb.HistoryBranch{
 				TreeId:    historyBranch.GetTreeId(),
 				BranchId:  branchID,
