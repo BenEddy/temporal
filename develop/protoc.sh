@@ -17,7 +17,9 @@ $PROTOGEN \
   --rewrite-enum=BuildId_State:BuildId \
   --output="$new" \
   -p go-grpc_out=paths=source_relative:"$new" \
-  -p go-helpers_out=paths=source_relative:"$new"
+  -p go-helpers_out=paths=source_relative:"$new" \
+  -p go-vtproto_opt=features=marshal+unmarshal+size+unmarshal_unsafe \
+  -p go-vtproto_out=paths=source_relative:"$new"
 
 color "Run goimports for proto files..."
 $GOIMPORTS -w "$new"
