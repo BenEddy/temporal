@@ -173,6 +173,9 @@ type (
 		stateMachineRegistry *hsm.Registry
 
 		chasmRegistry *chasm.Registry
+
+		lockLatency  metrics.TimerIface
+		lockRequests metrics.CounterIface
 	}
 
 	remoteClusterInfo struct {
@@ -1528,19 +1531,19 @@ func (s *ContextImpl) stoppedForOwnershipLost() bool {
 }
 
 func (s *ContextImpl) wLock() {
-	handler := s.metricsHandler.WithTags(metrics.OperationTag(metrics.ShardInfoScope))
-	metrics.LockRequests.With(handler).Record(1)
+	tag := metrics.OperationTag(metrics.ShardInfoScope)
+	s.lockRequests.Record(1, tag)
 	startTime := time.Now().UTC()
-	defer func() { metrics.LockLatency.With(handler).Record(time.Since(startTime)) }()
+	defer func() { s.lockLatency.Record(time.Since(startTime), tag) }()
 
 	s.rwLock.Lock()
 }
 
 func (s *ContextImpl) rLock() {
-	handler := s.metricsHandler.WithTags(metrics.OperationTag(metrics.ShardInfoScope))
-	metrics.LockRequests.With(handler).Record(1)
+	tag := metrics.OperationTag(metrics.ShardInfoScope)
+	s.lockRequests.Record(1, tag)
 	startTime := time.Now().UTC()
-	defer func() { metrics.LockLatency.With(handler).Record(time.Since(startTime)) }()
+	defer func() { s.lockLatency.Record(time.Since(startTime), tag) }()
 
 	s.rwLock.RLock()
 }
@@ -2142,6 +2145,9 @@ func newContext(
 		ioSemaphore:             locks.NewPrioritySemaphore(ioConcurrency),
 		stateMachineRegistry:    stateMachineRegistry,
 		chasmRegistry:           chasmRegistry,
+
+		lockLatency:  metrics.LockLatency.With(metricsHandler),
+		lockRequests: metrics.LockRequests.With(metricsHandler),
 	}
 	shardContext.taskKeyManager = newTaskKeyManager(
 		shardContext.taskCategoryRegistry,

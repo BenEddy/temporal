@@ -42,8 +42,10 @@ import (
 
 type (
 	metricEmitter struct {
-		metricsHandler metrics.Handler
-		logger         log.Logger
+		logger   log.Logger
+		handler  metrics.Handler
+		requests metrics.CounterIface
+		latency  metrics.TimerIface
 	}
 
 	shardPersistenceClient struct {
@@ -100,10 +102,7 @@ var _ NexusEndpointManager = (*nexusEndpointPersistenceClient)(nil)
 // NewShardPersistenceMetricsClient creates a client to manage shards
 func NewShardPersistenceMetricsClient(persistence ShardManager, metricsHandler metrics.Handler, healthSignals HealthSignalAggregator, logger log.Logger) ShardManager {
 	return &shardPersistenceClient{
-		metricEmitter: metricEmitter{
-			metricsHandler: metricsHandler,
-			logger:         logger,
-		},
+		metricEmitter: newMetricEmitter(metricsHandler, logger),
 		healthSignals: healthSignals,
 		persistence:   persistence,
 	}
@@ -112,10 +111,7 @@ func NewShardPersistenceMetricsClient(persistence ShardManager, metricsHandler m
 // NewExecutionPersistenceMetricsClient creates a client to manage executions
 func NewExecutionPersistenceMetricsClient(persistence ExecutionManager, metricsHandler metrics.Handler, healthSignals HealthSignalAggregator, logger log.Logger) ExecutionManager {
 	return &executionPersistenceClient{
-		metricEmitter: metricEmitter{
-			metricsHandler: metricsHandler,
-			logger:         logger,
-		},
+		metricEmitter: newMetricEmitter(metricsHandler, logger),
 		healthSignals: healthSignals,
 		persistence:   persistence,
 	}
@@ -124,10 +120,7 @@ func NewExecutionPersistenceMetricsClient(persistence ExecutionManager, metricsH
 // NewTaskPersistenceMetricsClient creates a client to manage tasks
 func NewTaskPersistenceMetricsClient(persistence TaskManager, metricsHandler metrics.Handler, healthSignals HealthSignalAggregator, logger log.Logger) TaskManager {
 	return &taskPersistenceClient{
-		metricEmitter: metricEmitter{
-			metricsHandler: metricsHandler,
-			logger:         logger,
-		},
+		metricEmitter: newMetricEmitter(metricsHandler, logger),
 		healthSignals: healthSignals,
 		persistence:   persistence,
 	}
@@ -136,10 +129,7 @@ func NewTaskPersistenceMetricsClient(persistence TaskManager, metricsHandler met
 // NewMetadataPersistenceMetricsClient creates a MetadataManager client to manage metadata
 func NewMetadataPersistenceMetricsClient(persistence MetadataManager, metricsHandler metrics.Handler, healthSignals HealthSignalAggregator, logger log.Logger) MetadataManager {
 	return &metadataPersistenceClient{
-		metricEmitter: metricEmitter{
-			metricsHandler: metricsHandler,
-			logger:         logger,
-		},
+		metricEmitter: newMetricEmitter(metricsHandler, logger),
 		healthSignals: healthSignals,
 		persistence:   persistence,
 	}
@@ -148,10 +138,7 @@ func NewMetadataPersistenceMetricsClient(persistence MetadataManager, metricsHan
 // NewClusterMetadataPersistenceMetricsClient creates a ClusterMetadataManager client to manage cluster metadata
 func NewClusterMetadataPersistenceMetricsClient(persistence ClusterMetadataManager, metricsHandler metrics.Handler, healthSignals HealthSignalAggregator, logger log.Logger) ClusterMetadataManager {
 	return &clusterMetadataPersistenceClient{
-		metricEmitter: metricEmitter{
-			metricsHandler: metricsHandler,
-			logger:         logger,
-		},
+		metricEmitter: newMetricEmitter(metricsHandler, logger),
 		healthSignals: healthSignals,
 		persistence:   persistence,
 	}
@@ -160,10 +147,7 @@ func NewClusterMetadataPersistenceMetricsClient(persistence ClusterMetadataManag
 // NewQueuePersistenceMetricsClient creates a client to manage queue
 func NewQueuePersistenceMetricsClient(persistence Queue, metricsHandler metrics.Handler, healthSignals HealthSignalAggregator, logger log.Logger) Queue {
 	return &queuePersistenceClient{
-		metricEmitter: metricEmitter{
-			metricsHandler: metricsHandler,
-			logger:         logger,
-		},
+		metricEmitter: newMetricEmitter(metricsHandler, logger),
 		healthSignals: healthSignals,
 		persistence:   persistence,
 	}
@@ -172,10 +156,7 @@ func NewQueuePersistenceMetricsClient(persistence Queue, metricsHandler metrics.
 // NewNexusEndpointPersistenceMetricsClient creates a NexusEndpointManager to manage nexus endpoints
 func NewNexusEndpointPersistenceMetricsClient(persistence NexusEndpointManager, metricsHandler metrics.Handler, healthSignals HealthSignalAggregator, logger log.Logger) NexusEndpointManager {
 	return &nexusEndpointPersistenceClient{
-		metricEmitter: metricEmitter{
-			metricsHandler: metricsHandler,
-			logger:         logger,
-		},
+		metricEmitter: newMetricEmitter(metricsHandler, logger),
 		healthSignals: healthSignals,
 		persistence:   persistence,
 	}
@@ -1284,11 +1265,25 @@ func (p *nexusEndpointPersistenceClient) DeleteNexusEndpoint(
 	return p.persistence.DeleteNexusEndpoint(ctx, request)
 }
 
+func newMetricEmitter(metricsHandler metrics.Handler, logger log.Logger) metricEmitter {
+	return metricEmitter{
+		logger:   logger,
+		handler:  metricsHandler,
+		requests: metrics.PersistenceRequests.With(metricsHandler),
+		latency:  metrics.PersistenceLatency.With(metricsHandler),
+	}
+}
+
 func (p *metricEmitter) recordRequestMetrics(operation string, caller string, latency time.Duration, err error) {
-	handler := p.metricsHandler.WithTags(metrics.OperationTag(operation), metrics.NamespaceTag(caller))
-	metrics.PersistenceRequests.With(handler).Record(1)
-	metrics.PersistenceLatency.With(handler).Record(latency)
-	updateErrorMetric(handler, p.logger, operation, err)
+	tags := []metrics.Tag{
+		metrics.OperationTag(operation),
+		metrics.NamespaceTag(caller),
+	}
+
+	p.requests.Record(1, tags...)
+	p.latency.Record(latency, tags...)
+
+	updateErrorMetric(p.handler, p.logger, operation, err)
 }
 
 func updateErrorMetric(handler metrics.Handler, logger log.Logger, operation string, err error) {

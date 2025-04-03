@@ -51,18 +51,22 @@ const emptyEntrySize = 0
 // lru is a concurrent fixed size cache that evicts elements in lru order
 type (
 	lru struct {
-		mut            sync.Mutex
-		byAccess       *list.List
-		byKey          map[interface{}]*list.Element
-		maxSize        int
-		currSize       int
-		pinnedSize     int
-		onPut          func(val any)
-		onEvict        func(val any)
-		ttl            time.Duration
-		pin            bool
-		timeSource     clock.TimeSource
-		metricsHandler metrics.Handler
+		mut        sync.Mutex
+		byAccess   *list.List
+		byKey      map[interface{}]*list.Element
+		maxSize    int
+		currSize   int
+		pinnedSize int
+		onPut      func(val any)
+		onEvict    func(val any)
+		ttl        time.Duration
+		pin        bool
+		timeSource clock.TimeSource
+
+		metricCacheEntryAgeOnGet      metrics.TimerIface
+		metricCachePinnedUsage        metrics.GaugeIface
+		metricCacheUsage              metrics.GaugeIface
+		metricCacheEntryAgeOnEviction metrics.TimerIface
 	}
 
 	iteratorImpl struct {
@@ -171,16 +175,20 @@ func NewWithMetrics(maxSize int, opts *Options, handler metrics.Handler) Cache {
 	metrics.CacheSize.With(handler).Record(float64(maxSize))
 	metrics.CacheTtl.With(handler).Record(opts.TTL)
 	return &lru{
-		byAccess:       list.New(),
-		byKey:          make(map[interface{}]*list.Element),
-		ttl:            opts.TTL,
-		maxSize:        maxSize,
-		currSize:       0,
-		pin:            opts.Pin,
-		onPut:          opts.OnPut,
-		onEvict:        opts.OnEvict,
-		timeSource:     timeSource,
-		metricsHandler: handler,
+		byAccess:   list.New(),
+		byKey:      make(map[interface{}]*list.Element),
+		ttl:        opts.TTL,
+		maxSize:    maxSize,
+		currSize:   0,
+		pin:        opts.Pin,
+		onPut:      opts.OnPut,
+		onEvict:    opts.OnEvict,
+		timeSource: timeSource,
+
+		metricCacheEntryAgeOnGet:      metrics.CacheEntryAgeOnGet.With(handler),
+		metricCachePinnedUsage:        metrics.CachePinnedUsage.With(handler),
+		metricCacheUsage:              metrics.CacheUsage.With(handler),
+		metricCacheEntryAgeOnEviction: metrics.CacheEntryAgeOnEviction.With(handler),
 	}
 }
 
@@ -205,7 +213,7 @@ func (c *lru) Get(key interface{}) interface{} {
 
 	entry := element.Value.(*entryImpl)
 
-	metrics.CacheEntryAgeOnGet.With(c.metricsHandler).Record(c.timeSource.Now().UTC().Sub(entry.createTime))
+	c.metricCacheEntryAgeOnGet.Record(c.timeSource.Now().UTC().Sub(entry.createTime))
 
 	if c.isEntryExpired(entry, c.timeSource.Now().UTC()) {
 		// Entry has expired
@@ -272,7 +280,7 @@ func (c *lru) Release(key interface{}) {
 	entry.refCount--
 	if entry.refCount == 0 {
 		c.pinnedSize -= entry.Size()
-		metrics.CachePinnedUsage.With(c.metricsHandler).Record(float64(c.pinnedSize))
+		c.metricCachePinnedUsage.Record(float64(c.pinnedSize))
 	}
 	// Entry size might have changed. Recalculate size and evict entries if necessary.
 	newEntrySize := getSize(entry.value)
@@ -281,7 +289,7 @@ func (c *lru) Release(key interface{}) {
 	if c.currSize > c.maxSize {
 		c.tryEvictUntilCacheSizeUnderLimit()
 	}
-	metrics.CacheUsage.With(c.metricsHandler).Record(float64(c.currSize))
+	c.metricCacheUsage.Record(float64(c.currSize))
 }
 
 // Size returns the current size of the lru, useful if cache is not full. This size is calculated by summing
@@ -333,7 +341,7 @@ func (c *lru) putInternal(key interface{}, value interface{}, allowUpdate bool) 
 				existingEntry.value = value
 				existingEntry.size = newEntrySize
 				c.currSize = newCacheSize
-				metrics.CacheUsage.With(c.metricsHandler).Record(float64(c.currSize))
+				c.metricCacheUsage.Record(float64(c.currSize))
 				c.updateEntryTTL(existingEntry)
 
 				if c.onPut != nil {
@@ -368,7 +376,7 @@ func (c *lru) putInternal(key interface{}, value interface{}, allowUpdate bool) 
 	element := c.byAccess.PushFront(entry)
 	c.byKey[key] = element
 	c.currSize = newCacheSize
-	metrics.CacheUsage.With(c.metricsHandler).Record(float64(c.currSize))
+	c.metricCacheUsage.Record(float64(c.currSize))
 
 	if c.onPut != nil {
 		c.onPut(value)
@@ -384,8 +392,8 @@ func (c *lru) calculateNewCacheSize(newEntrySize int, existingEntrySize int) int
 func (c *lru) deleteInternal(element *list.Element) {
 	entry := c.byAccess.Remove(element).(*entryImpl)
 	c.currSize -= entry.Size()
-	metrics.CacheUsage.With(c.metricsHandler).Record(float64(c.currSize))
-	metrics.CacheEntryAgeOnEviction.With(c.metricsHandler).Record(c.timeSource.Now().UTC().Sub(entry.createTime))
+	c.metricCacheUsage.Record(float64(c.currSize))
+	c.metricCacheEntryAgeOnEviction.Record(c.timeSource.Now().UTC().Sub(entry.createTime))
 	delete(c.byKey, entry.key)
 
 	if c.onEvict != nil {
@@ -444,7 +452,7 @@ func (c *lru) updateEntryRefCount(entry *entryImpl) {
 		entry.refCount++
 		if entry.refCount == 1 {
 			c.pinnedSize += entry.Size()
-			metrics.CachePinnedUsage.With(c.metricsHandler).Record(float64(c.pinnedSize))
+			c.metricCachePinnedUsage.Record(float64(c.pinnedSize))
 		}
 	}
 }
