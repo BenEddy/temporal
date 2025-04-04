@@ -206,8 +206,18 @@ func (m *InternalTaskQueueStatus) MarshalToSizedBufferVT(dAtA []byte) (int, erro
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.ReadBufferLength != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ReadBufferLength))
+	if m.MaxReadLevel != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.MaxReadLevel))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.ApproximateBacklogCount != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ApproximateBacklogCount))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.LoadedTasks != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.LoadedTasks))
 		i--
 		dAtA[i] = 0x20
 	}
@@ -319,15 +329,17 @@ func (m *PhysicalTaskQueueInfo) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.InternalTaskQueueStatus != nil {
-		size, err := m.InternalTaskQueueStatus.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
+	if len(m.InternalTaskQueueStatus) > 0 {
+		for iNdEx := len(m.InternalTaskQueueStatus) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.InternalTaskQueueStatus[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x1a
 		}
-		i -= size
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-		i--
-		dAtA[i] = 0x1a
 	}
 	if m.TaskQueueStats != nil {
 		if vtmsg, ok := interface{}(m.TaskQueueStats).(interface {
@@ -647,8 +659,14 @@ func (m *InternalTaskQueueStatus) SizeVT() (n int) {
 		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.ReadBufferLength != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.ReadBufferLength))
+	if m.LoadedTasks != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.LoadedTasks))
+	}
+	if m.ApproximateBacklogCount != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ApproximateBacklogCount))
+	}
+	if m.MaxReadLevel != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.MaxReadLevel))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -696,9 +714,11 @@ func (m *PhysicalTaskQueueInfo) SizeVT() (n int) {
 		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.InternalTaskQueueStatus != nil {
-		l = m.InternalTaskQueueStatus.SizeVT()
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if len(m.InternalTaskQueueStatus) > 0 {
+		for _, e := range m.InternalTaskQueueStatus {
+			l = e.SizeVT()
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -1130,9 +1150,9 @@ func (m *InternalTaskQueueStatus) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReadBufferLength", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field LoadedTasks", wireType)
 			}
-			m.ReadBufferLength = 0
+			m.LoadedTasks = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -1142,7 +1162,45 @@ func (m *InternalTaskQueueStatus) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ReadBufferLength |= int64(b&0x7F) << shift
+				m.LoadedTasks |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ApproximateBacklogCount", wireType)
+			}
+			m.ApproximateBacklogCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ApproximateBacklogCount |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxReadLevel", wireType)
+			}
+			m.MaxReadLevel = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxReadLevel |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1400,10 +1458,8 @@ func (m *PhysicalTaskQueueInfo) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.InternalTaskQueueStatus == nil {
-				m.InternalTaskQueueStatus = &InternalTaskQueueStatus{}
-			}
-			if err := m.InternalTaskQueueStatus.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.InternalTaskQueueStatus = append(m.InternalTaskQueueStatus, &InternalTaskQueueStatus{})
+			if err := m.InternalTaskQueueStatus[len(m.InternalTaskQueueStatus)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2216,9 +2272,9 @@ func (m *InternalTaskQueueStatus) UnmarshalVTUnsafe(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReadBufferLength", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field LoadedTasks", wireType)
 			}
-			m.ReadBufferLength = 0
+			m.LoadedTasks = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -2228,7 +2284,45 @@ func (m *InternalTaskQueueStatus) UnmarshalVTUnsafe(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ReadBufferLength |= int64(b&0x7F) << shift
+				m.LoadedTasks |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ApproximateBacklogCount", wireType)
+			}
+			m.ApproximateBacklogCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ApproximateBacklogCount |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxReadLevel", wireType)
+			}
+			m.MaxReadLevel = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxReadLevel |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -2486,10 +2580,8 @@ func (m *PhysicalTaskQueueInfo) UnmarshalVTUnsafe(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.InternalTaskQueueStatus == nil {
-				m.InternalTaskQueueStatus = &InternalTaskQueueStatus{}
-			}
-			if err := m.InternalTaskQueueStatus.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
+			m.InternalTaskQueueStatus = append(m.InternalTaskQueueStatus, &InternalTaskQueueStatus{})
+			if err := m.InternalTaskQueueStatus[len(m.InternalTaskQueueStatus)-1].UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

@@ -676,6 +676,20 @@ func (m *StateMachineTombstone_StateMachinePath) MarshalToSizedBufferVT(dAtA []b
 	}
 	return len(dAtA) - i, nil
 }
+func (m *StateMachineTombstone_ChasmNodePath) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *StateMachineTombstone_ChasmNodePath) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.ChasmNodePath)
+	copy(dAtA[i:], m.ChasmNodePath)
+	i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ChasmNodePath)))
+	i--
+	dAtA[i] = 0x42
+	return len(dAtA) - i, nil
+}
 func (m *StateMachinePath) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -991,6 +1005,16 @@ func (m *StateMachineTombstone_StateMachinePath) SizeVT() (n int) {
 		l = m.StateMachinePath.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	return n
+}
+func (m *StateMachineTombstone_ChasmNodePath) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChasmNodePath)
+	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	return n
 }
 func (m *StateMachinePath) SizeVT() (n int) {
@@ -2538,6 +2562,38 @@ func (m *StateMachineTombstone) UnmarshalVT(dAtA []byte) error {
 				}
 				m.StateMachineKey = &StateMachineTombstone_StateMachinePath{StateMachinePath: v}
 			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChasmNodePath", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StateMachineKey = &StateMachineTombstone_ChasmNodePath{ChasmNodePath: string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -4197,6 +4253,42 @@ func (m *StateMachineTombstone) UnmarshalVTUnsafe(dAtA []byte) error {
 				}
 				m.StateMachineKey = &StateMachineTombstone_StateMachinePath{StateMachinePath: v}
 			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChasmNodePath", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var stringValue string
+			if intStringLen > 0 {
+				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
+			}
+			m.StateMachineKey = &StateMachineTombstone_ChasmNodePath{ChasmNodePath: stringValue}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

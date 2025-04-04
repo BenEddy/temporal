@@ -78,6 +78,17 @@ func (m *MutableStateChecksumPayload) MarshalToSizedBufferVT(dAtA []byte) (int, 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.PendingChasmNodePaths) > 0 {
+		for iNdEx := len(m.PendingChasmNodePaths) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.PendingChasmNodePaths[iNdEx])
+			copy(dAtA[i:], m.PendingChasmNodePaths[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.PendingChasmNodePaths[iNdEx])))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0xd2
+		}
+	}
 	if m.SignalExternalCount != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.SignalExternalCount))
 		i--
@@ -438,6 +449,12 @@ func (m *MutableStateChecksumPayload) SizeVT() (n int) {
 	}
 	if m.SignalExternalCount != 0 {
 		n += 2 + protohelpers.SizeOfVarint(uint64(m.SignalExternalCount))
+	}
+	if len(m.PendingChasmNodePaths) > 0 {
+		for _, s := range m.PendingChasmNodePaths {
+			l = len(s)
+			n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -1271,6 +1288,38 @@ func (m *MutableStateChecksumPayload) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 26:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PendingChasmNodePaths", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PendingChasmNodePaths = append(m.PendingChasmNodePaths, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -2125,6 +2174,42 @@ func (m *MutableStateChecksumPayload) UnmarshalVTUnsafe(dAtA []byte) error {
 					break
 				}
 			}
+		case 26:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PendingChasmNodePaths", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var stringValue string
+			if intStringLen > 0 {
+				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
+			}
+			m.PendingChasmNodePaths = append(m.PendingChasmNodePaths, stringValue)
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

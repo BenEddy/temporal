@@ -78,6 +78,71 @@ func (m *ChasmNode) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Data != nil {
+		if vtmsg, ok := interface{}(m.Data).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Data)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Metadata != nil {
+		size, err := m.Metadata.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ChasmNodeMetadata) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ChasmNodeMetadata) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ChasmNodeMetadata) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
 	if vtmsg, ok := m.Attributes.(interface {
 		MarshalToSizedBufferVT([]byte) (int, error)
 	}); ok {
@@ -110,12 +175,12 @@ func (m *ChasmNode) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ChasmNode_ComponentAttributes) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_ComponentAttributes) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ChasmNode_ComponentAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_ComponentAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.ComponentAttributes != nil {
 		size, err := m.ComponentAttributes.MarshalToSizedBufferVT(dAtA[:i])
@@ -129,12 +194,12 @@ func (m *ChasmNode_ComponentAttributes) MarshalToSizedBufferVT(dAtA []byte) (int
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ChasmNode_DataAttributes) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_DataAttributes) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ChasmNode_DataAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_DataAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.DataAttributes != nil {
 		size, err := m.DataAttributes.MarshalToSizedBufferVT(dAtA[:i])
@@ -148,12 +213,12 @@ func (m *ChasmNode_DataAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, err
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ChasmNode_CollectionAttributes) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_CollectionAttributes) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ChasmNode_CollectionAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_CollectionAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.CollectionAttributes != nil {
 		size, err := m.CollectionAttributes.MarshalToSizedBufferVT(dAtA[:i])
@@ -167,12 +232,12 @@ func (m *ChasmNode_CollectionAttributes) MarshalToSizedBufferVT(dAtA []byte) (in
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ChasmNode_PointerAttributes) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_PointerAttributes) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ChasmNode_PointerAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ChasmNodeMetadata_PointerAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.PointerAttributes != nil {
 		size, err := m.PointerAttributes.MarshalToSizedBufferVT(dAtA[:i])
@@ -317,28 +382,6 @@ func (m *ChasmComponentAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, err
 			dAtA[i] = 0x1a
 		}
 	}
-	if m.Data != nil {
-		if vtmsg, ok := interface{}(m.Data).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.Data)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
 	if len(m.Type) > 0 {
 		i -= len(m.Type)
 		copy(dAtA[i:], m.Type)
@@ -378,28 +421,6 @@ func (m *ChasmDataAttributes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
-	}
-	if m.Data != nil {
-		if vtmsg, ok := interface{}(m.Data).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.Data)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
-		}
-		i--
-		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -485,6 +506,30 @@ func (m *ChasmNode) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Metadata != nil {
+		l = m.Metadata.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.Data != nil {
+		if size, ok := interface{}(m.Data).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Data)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *ChasmNodeMetadata) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	if m.InitialVersionedTransition != nil {
 		l = m.InitialVersionedTransition.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
@@ -500,7 +545,7 @@ func (m *ChasmNode) SizeVT() (n int) {
 	return n
 }
 
-func (m *ChasmNode_ComponentAttributes) SizeVT() (n int) {
+func (m *ChasmNodeMetadata_ComponentAttributes) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -512,7 +557,7 @@ func (m *ChasmNode_ComponentAttributes) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ChasmNode_DataAttributes) SizeVT() (n int) {
+func (m *ChasmNodeMetadata_DataAttributes) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -524,7 +569,7 @@ func (m *ChasmNode_DataAttributes) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ChasmNode_CollectionAttributes) SizeVT() (n int) {
+func (m *ChasmNodeMetadata_CollectionAttributes) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -536,7 +581,7 @@ func (m *ChasmNode_CollectionAttributes) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ChasmNode_PointerAttributes) SizeVT() (n int) {
+func (m *ChasmNodeMetadata_PointerAttributes) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -594,16 +639,6 @@ func (m *ChasmComponentAttributes) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.Data != nil {
-		if size, ok := interface{}(m.Data).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.Data)
-		}
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	if len(m.Tasks) > 0 {
 		for _, e := range m.Tasks {
 			l = e.SizeVT()
@@ -620,16 +655,6 @@ func (m *ChasmDataAttributes) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Data != nil {
-		if size, ok := interface{}(m.Data).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.Data)
-		}
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -687,6 +712,137 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: ChasmNode: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Metadata == nil {
+				m.Metadata = &ChasmNodeMetadata{}
+			}
+			if err := m.Metadata.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Data == nil {
+				m.Data = &v1.DataBlob{}
+			}
+			if unmarshal, ok := interface{}(m.Data).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Data); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ChasmNodeMetadata) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ChasmNodeMetadata: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ChasmNodeMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -790,7 +946,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_ComponentAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_ComponentAttributes); ok {
 				if err := oneof.ComponentAttributes.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -799,7 +955,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_ComponentAttributes{ComponentAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_ComponentAttributes{ComponentAttributes: v}
 			}
 			iNdEx = postIndex
 		case 12:
@@ -831,7 +987,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_DataAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_DataAttributes); ok {
 				if err := oneof.DataAttributes.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -840,7 +996,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_DataAttributes{DataAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_DataAttributes{DataAttributes: v}
 			}
 			iNdEx = postIndex
 		case 13:
@@ -872,7 +1028,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_CollectionAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_CollectionAttributes); ok {
 				if err := oneof.CollectionAttributes.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -881,7 +1037,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_CollectionAttributes{CollectionAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_CollectionAttributes{CollectionAttributes: v}
 			}
 			iNdEx = postIndex
 		case 14:
@@ -913,7 +1069,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_PointerAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_PointerAttributes); ok {
 				if err := oneof.PointerAttributes.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -922,7 +1078,7 @@ func (m *ChasmNode) UnmarshalVT(dAtA []byte) error {
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_PointerAttributes{PointerAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_PointerAttributes{PointerAttributes: v}
 			}
 			iNdEx = postIndex
 		default:
@@ -1239,50 +1395,6 @@ func (m *ChasmComponentAttributes) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Type = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Data == nil {
-				m.Data = &v1.DataBlob{}
-			}
-			if unmarshal, ok := interface{}(m.Data).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Data); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
@@ -1368,50 +1480,6 @@ func (m *ChasmDataAttributes) UnmarshalVT(dAtA []byte) error {
 			return fmt.Errorf("proto: ChasmDataAttributes: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Data == nil {
-				m.Data = &v1.DataBlob{}
-			}
-			if unmarshal, ok := interface{}(m.Data).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Data); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -1599,6 +1667,137 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Metadata == nil {
+				m.Metadata = &ChasmNodeMetadata{}
+			}
+			if err := m.Metadata.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Data == nil {
+				m.Data = &v1.DataBlob{}
+			}
+			if unmarshal, ok := interface{}(m.Data).(interface {
+				UnmarshalVTUnsafe([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Data); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ChasmNodeMetadata) UnmarshalVTUnsafe(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ChasmNodeMetadata: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ChasmNodeMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field InitialVersionedTransition", wireType)
 			}
 			var msglen int
@@ -1698,7 +1897,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_ComponentAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_ComponentAttributes); ok {
 				if err := oneof.ComponentAttributes.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -1707,7 +1906,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 				if err := v.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_ComponentAttributes{ComponentAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_ComponentAttributes{ComponentAttributes: v}
 			}
 			iNdEx = postIndex
 		case 12:
@@ -1739,7 +1938,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_DataAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_DataAttributes); ok {
 				if err := oneof.DataAttributes.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -1748,7 +1947,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 				if err := v.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_DataAttributes{DataAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_DataAttributes{DataAttributes: v}
 			}
 			iNdEx = postIndex
 		case 13:
@@ -1780,7 +1979,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_CollectionAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_CollectionAttributes); ok {
 				if err := oneof.CollectionAttributes.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -1789,7 +1988,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 				if err := v.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_CollectionAttributes{CollectionAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_CollectionAttributes{CollectionAttributes: v}
 			}
 			iNdEx = postIndex
 		case 14:
@@ -1821,7 +2020,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Attributes.(*ChasmNode_PointerAttributes); ok {
+			if oneof, ok := m.Attributes.(*ChasmNodeMetadata_PointerAttributes); ok {
 				if err := oneof.PointerAttributes.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -1830,7 +2029,7 @@ func (m *ChasmNode) UnmarshalVTUnsafe(dAtA []byte) error {
 				if err := v.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Attributes = &ChasmNode_PointerAttributes{PointerAttributes: v}
+				m.Attributes = &ChasmNodeMetadata_PointerAttributes{PointerAttributes: v}
 			}
 			iNdEx = postIndex
 		default:
@@ -2159,50 +2358,6 @@ func (m *ChasmComponentAttributes) UnmarshalVTUnsafe(dAtA []byte) error {
 			}
 			m.Type = stringValue
 			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Data == nil {
-				m.Data = &v1.DataBlob{}
-			}
-			if unmarshal, ok := interface{}(m.Data).(interface {
-				UnmarshalVTUnsafe([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Data); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
@@ -2288,50 +2443,6 @@ func (m *ChasmDataAttributes) UnmarshalVTUnsafe(dAtA []byte) error {
 			return fmt.Errorf("proto: ChasmDataAttributes: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Data == nil {
-				m.Data = &v1.DataBlob{}
-			}
-			if unmarshal, ok := interface{}(m.Data).(interface {
-				UnmarshalVTUnsafe([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Data); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
