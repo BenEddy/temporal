@@ -90,10 +90,7 @@ func NewVersionChecker(supportedClients map[string]string, serverVersion string)
 
 // GetClientNameAndVersion extracts SDK name and version from context headers
 func GetClientNameAndVersion(ctx context.Context) (string, string) {
-	headers := GetValues(ctx, ClientNameHeaderName, ClientVersionHeaderName)
-	clientName := headers[0]
-	clientVersion := headers[1]
-	return clientName, clientVersion
+	return GetValue(ctx, ClientNameHeaderName), GetValue(ctx, ClientVersionHeaderName)
 }
 
 // SetVersions sets headers for internal communications.
@@ -114,11 +111,7 @@ func SetVersionsForTests(ctx context.Context, clientVersion, clientName, support
 
 // ClientSupported returns an error if client is unsupported, nil otherwise.
 func (vc *versionChecker) ClientSupported(ctx context.Context) error {
-
-	headers := GetValues(ctx, ClientNameHeaderName, ClientVersionHeaderName, SupportedServerVersionsHeaderName)
-	clientName := headers[0]
-	clientVersion := headers[1]
-	supportedServerVersions := headers[2]
+	clientName, clientVersion := GetClientNameAndVersion(ctx)
 
 	// Validate client version only if it is provided and server knows about this client.
 	if clientName != "" && clientVersion != "" {
@@ -132,6 +125,8 @@ func (vc *versionChecker) ClientSupported(ctx context.Context) error {
 			}
 		}
 	}
+
+	supportedServerVersions := GetValue(ctx, SupportedServerVersionsHeaderName)
 
 	// Validate supported server version if it is provided.
 	if supportedServerVersions != "" {
@@ -150,11 +145,11 @@ func (vc *versionChecker) ClientSupported(ctx context.Context) error {
 // ClientSupportsFeature returns true if the client reports support for the
 // given feature (which should be one of the Feature... constants above).
 func (vc *versionChecker) ClientSupportsFeature(ctx context.Context, feature string) bool {
-	headers := GetValues(ctx, SupportedFeaturesHeaderName)
-	if len(headers) == 0 {
+	header := GetValue(ctx, SupportedFeaturesHeaderName)
+	if header == "" {
 		return false
 	}
-	for clientFeature := range strings.SplitSeq(headers[0], SupportedFeaturesHeaderDelim) {
+	for clientFeature := range strings.SplitSeq(header, SupportedFeaturesHeaderDelim) {
 		if clientFeature == feature {
 			return true
 		}

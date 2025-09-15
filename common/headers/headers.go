@@ -33,18 +33,13 @@ var (
 	}
 )
 
-// GetValues returns header values for passed header names.
-// It always returns slice of the same size as number of passed header names.
-func GetValues(ctx context.Context, headerNames ...string) []string {
-	headerValues := make([]string, len(headerNames))
-
-	for i, headerName := range headerNames {
-		if values := metadata.ValueFromIncomingContext(ctx, headerName); len(values) > 0 {
-			headerValues[i] = values[0]
-		}
+// GetValue returns a header value for a header name.
+func GetValue(ctx context.Context, headerName string) string {
+	if values := metadata.ValueFromIncomingContext(ctx, headerName); len(values) > 0 {
+		return values[0]
 	}
 
-	return headerValues
+	return ""
 }
 
 // Propagate propagates version headers from incoming context to outgoing context.

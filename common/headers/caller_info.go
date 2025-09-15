@@ -176,10 +176,9 @@ func setIncomingMD(
 func GetCallerInfo(
 	ctx context.Context,
 ) CallerInfo {
-	values := GetValues(ctx, CallerNameHeaderName, CallerTypeHeaderName, CallOriginHeaderName)
 	return CallerInfo{
-		CallerName: values[0],
-		CallerType: values[1],
-		CallOrigin: values[2],
+		CallerName: GetValue(ctx, CallerNameHeaderName),
+		CallerType: GetValue(ctx, CallerTypeHeaderName),
+		CallOrigin: GetValue(ctx, CallOriginHeaderName),
 	}
 }
