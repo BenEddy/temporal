@@ -236,6 +236,8 @@ func (g *generator) runProtogen(ctx context.Context) error {
 		"-p", "plugin=protoc-gen-go-helpers=" + g.protocGenGoHelpersBin,
 		"-p", "go-grpc_out=paths=source_relative:" + g.tempOut,
 		"-p", "go-helpers_out=paths=source_relative:" + g.tempOut,
+		"-p", "go-vtproto_opt=features=marshal+unmarshal+size+unmarshal_unsafe",
+		"-p", "go-vtproto_out=paths=source_relative:" + g.tempOut,
 	}
 	if err := runCommand(ctx, g.protogenBin, protoArgs...); err != nil {
 		return fmt.Errorf("error running protogen: %w", err)
