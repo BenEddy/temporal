@@ -1,13 +1,13 @@
 package cache
 
 import (
-	"container/list"
 	"context"
 	"sync"
 	"time"
 
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
+	"go.temporal.io/server/common/cache/list"
 	"go.temporal.io/server/common/clock"
 	"go.temporal.io/server/common/dynamicconfig"
 	"go.temporal.io/server/common/goro"
@@ -31,8 +31,8 @@ const emptyEntrySize = 0
 type (
 	lru struct {
 		mut             sync.Mutex
-		byAccess        *list.List
-		byKey           map[interface{}]*list.Element
+		byAccess        *list.WeakList[entryImpl]
+		byKey           map[interface{}]*list.Element[entryImpl]
 		maxSize         int
 		currSize        int
 		pinnedSize      int
@@ -49,7 +49,7 @@ type (
 	iteratorImpl struct {
 		lru        *lru
 		createTime time.Time
-		nextItem   *list.Element
+		nextItem   *list.Element[entryImpl]
 	}
 
 	entryImpl struct {
@@ -77,7 +77,7 @@ func (it *iteratorImpl) Next() Entry {
 		panic("LRU cache iterator Next called when there is no next item")
 	}
 
-	entry := it.nextItem.Value.(*entryImpl)
+	entry := it.nextItem.Value()
 	it.nextItem = it.nextItem.Next()
 	// make a copy of the entry so there will be no concurrent access to this entry
 	entry = &entryImpl{
@@ -92,7 +92,7 @@ func (it *iteratorImpl) Next() Entry {
 
 func (it *iteratorImpl) prepareNext() {
 	for it.nextItem != nil {
-		entry := it.nextItem.Value.(*entryImpl)
+		entry := it.nextItem.Value()
 		if it.lru.isEntryExpired(entry, it.createTime) {
 			nextItem := it.nextItem.Next()
 			it.lru.deleteInternal(it.nextItem)
@@ -160,8 +160,8 @@ func NewWithMetrics(maxSize int, opts *Options, handler metrics.Handler) Stoppab
 	metrics.CacheSize.With(handler).Record(float64(maxSize))
 	metrics.CacheTtl.With(handler).Record(opts.TTL)
 	c := &lru{
-		byAccess:        list.New(),
-		byKey:           make(map[interface{}]*list.Element),
+		byAccess:        list.New[entryImpl](),
+		byKey:           make(map[interface{}]*list.Element[entryImpl]),
 		ttl:             opts.TTL,
 		maxSize:         maxSize,
 		currSize:        0,
@@ -197,7 +197,7 @@ func (c *lru) Get(key interface{}) interface{} {
 		return nil
 	}
 
-	entry := element.Value.(*entryImpl)
+	entry := element.Value()
 
 	if c.isEntryExpired(entry, c.timeSource.Now().UTC()) {
 		// Entry has expired
@@ -262,7 +262,7 @@ func (c *lru) Release(key interface{}) {
 	if !ok {
 		return
 	}
-	entry := elt.Value.(*entryImpl)
+	entry := elt.Value()
 	entry.refCount--
 	if entry.refCount == 0 {
 		c.pinnedSize -= entry.Size()
@@ -306,7 +306,7 @@ func (c *lru) putInternal(key interface{}, value interface{}, allowUpdate bool) 
 	elt := c.byKey[key]
 	// If the entry exists, check if it has expired or update the value
 	if elt != nil {
-		existingEntry := elt.Value.(*entryImpl)
+		existingEntry := elt.Value()
 		if !c.isEntryExpired(existingEntry, c.timeSource.Now().UTC()) {
 			existingVal := existingEntry.value
 
@@ -375,7 +375,7 @@ func (c *lru) calculateNewCacheSize(newEntrySize int, existingEntrySize int) int
 	return c.currSize - existingEntrySize + newEntrySize
 }
 
-func (c *lru) deleteInternal(element *list.Element) {
+func (c *lru) deleteInternal(element *list.Element[entryImpl]) {
 	entry := c.byAccess.Remove(element).(*entryImpl)
 	c.currSize -= entry.Size()
 	metrics.CacheUsage.With(c.metricsHandler).Record(float64(c.currSize))
@@ -402,7 +402,7 @@ func (c *lru) tryEvictUntilEnoughSpaceWithSkipEntry(newEntrySize int, existingEn
 	}
 
 	for c.calculateNewCacheSize(newEntrySize, existingEntrySize) > c.maxSize && element != nil {
-		entry := element.Value.(*entryImpl)
+		entry := element.Value()
 		if existingEntry != nil && entry.key == existingEntry.key {
 			element = element.Prev()
 			continue
@@ -411,7 +411,7 @@ func (c *lru) tryEvictUntilEnoughSpaceWithSkipEntry(newEntrySize int, existingEn
 	}
 }
 
-func (c *lru) tryEvictAndGetPreviousElement(entry *entryImpl, element *list.Element) *list.Element {
+func (c *lru) tryEvictAndGetPreviousElement(entry *entryImpl, element *list.Element[entryImpl]) *list.Element[entryImpl] {
 	if entry.refCount == 0 {
 		elementPrev := element.Prev()
 		// currSize will be updated within deleteInternal
@@ -480,7 +480,7 @@ func (c *lru) bgEvict(settings dynamicconfig.CacheBackgroundEvictSettings) {
 				return false
 			}
 			elementPrev := element.Prev()
-			entry := element.Value.(*entryImpl) // nolint:revive
+			entry := element.Value() // nolint:revive
 			if !c.isEntryExpired(entry, now) {
 				return false
 			}
