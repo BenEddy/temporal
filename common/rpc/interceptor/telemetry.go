@@ -202,10 +202,15 @@ func (ti *TelemetryInterceptor) RecordLatencyMetrics(ctx context.Context, startT
 		metrics.ServiceLatencyUserLatency.With(metricsHandler).Record(userLatencyDuration)
 	}
 
+	largePayload := "false"
+	if val, ok := metrics.ContextCounterGet(ctx, "large_payload_count"); ok && val > 0 {
+		largePayload = "true"
+	}
+
 	latency := time.Since(startTime)
 	metrics.ServiceLatency.With(metricsHandler).Record(latency)
 	noUserLatency := max(0, latency-userLatencyDuration)
-	metrics.ServiceLatencyNoUserLatency.With(metricsHandler).Record(noUserLatency)
+	metrics.ServiceLatencyNoUserLatency.With(metricsHandler).Record(noUserLatency, metrics.StringTag("lp", largePayload))
 }
 
 func (ti *TelemetryInterceptor) StreamIntercept(
