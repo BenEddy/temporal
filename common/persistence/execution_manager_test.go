@@ -5,12 +5,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	commonpb "go.temporal.io/api/common/v1"
 	enumspb "go.temporal.io/api/enums/v1"
+	historypb "go.temporal.io/api/history/v1"
 	"go.temporal.io/api/serviceerror"
 	enumsspb "go.temporal.io/server/api/enums/v1"
 	historyspb "go.temporal.io/server/api/history/v1"
 	persistencespb "go.temporal.io/server/api/persistence/v1"
 	"go.temporal.io/server/chasm"
+	"go.temporal.io/server/common"
 	"go.temporal.io/server/common/dynamicconfig"
 	"go.temporal.io/server/common/log"
 	p "go.temporal.io/server/common/persistence"
@@ -235,4 +239,118 @@ func TestExecutionManager_TrimHistoryBranchSkipped_EmptyBranchToken(t *testing.T
 	if _, ok := err.(*p.ConditionFailedError); !ok {
 		t.Fatalf("expected ConditionFailedError, got %T", err)
 	}
+}
+
+func TestExecutionManager_ReadHistoryBranchReverse_WrongPrevTxnID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	serializer := serialization.NewSerializer()
+	branchUtil := p.NewHistoryBranchUtil(serializer)
+
+	// Helper to serialize a batch of events into a blob (the persistence layer returns batch blobs).
+	events := func(ids ...int64) *commonpb.DataBlob {
+		events := make([]*historypb.HistoryEvent, 0, len(ids))
+		for _, id := range ids {
+			events = append(events, &historypb.HistoryEvent{EventId: id, Version: 1})
+		}
+		blob, err := serializer.SerializeEvents(events)
+		require.NoError(t, err)
+		return blob
+	}
+
+	// Create some history events. The original WF history is on root-branch and there are two resets.
+	nodes := map[string][]p.InternalHistoryNode{
+		"root-branch": {
+			{NodeID: 4, TransactionID: 2000, PrevTransactionID: 1000, Events: events(4, 5)},
+			{NodeID: 1, TransactionID: 1000, PrevTransactionID: 0, Events: events(1, 2, 3)},
+		},
+		"reset-1": {
+			{NodeID: 9, TransactionID: 4000, PrevTransactionID: 3000, Events: events(9, 10)},
+			{NodeID: 6, TransactionID: 3000, PrevTransactionID: 2000, Events: events(6, 7, 8)},
+		},
+		"reset-2": {
+			{NodeID: 14, TransactionID: 6000, PrevTransactionID: 5000, Events: events(14, 15)},
+			// Mis-wire the prev txn ID to simulate a bug
+			{NodeID: 11, TransactionID: 5000, PrevTransactionID: 4, Events: events(11, 12, 13)},
+		},
+	}
+
+	store := mockp.NewMockExecutionStore(ctrl)
+	store.EXPECT().GetHistoryBranchUtil().AnyTimes().Return(branchUtil)
+	store.EXPECT().ReadHistoryBranch(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
+		func(_ context.Context, req *p.InternalReadHistoryBranchRequest) (*p.InternalReadHistoryBranchResponse, error) {
+			return &p.InternalReadHistoryBranchResponse{Nodes: nodes[req.BranchID]}, nil
+		},
+	)
+
+	em := p.NewExecutionManager(
+		store,
+		serializer,
+		nil,
+		log.NewNoopLogger(),
+		dynamicconfig.GetIntPropertyFn(1024*1024),
+		dynamicconfig.GetBoolPropertyFn(false),
+	)
+
+	// Generate a branch token for the reset-2 branch. It has two ancestors: root-branch and reset-1.
+	branchToken, err := branchUtil.NewHistoryBranch(
+		"ns", "wf-id", "wf-run-id", "tree", new("reset-2"),
+		[]*persistencespb.HistoryBranchRange{
+			{BranchId: "root-branch", BeginNodeId: 1, EndNodeId: 6},
+			{BranchId: "reset-1", BeginNodeId: 6, EndNodeId: 11},
+		},
+		0, 0, 0,
+	)
+	require.NoError(t, err)
+
+	_, err = getWorkflowExecutionHistoryReverse(t, em, branchToken, 6000)
+	require.NoError(t, err)
+}
+
+// Simulate a client reading history via the GetWorkflowExecutionHistoryReverse API.
+func getWorkflowExecutionHistoryReverse(
+	t *testing.T,
+	em p.ExecutionManager,
+	branchToken []byte,
+	lastFirstTxnID int64,
+) ([]*historypb.HistoryEvent, error) {
+	t.Helper()
+
+	var allEvents []*historypb.HistoryEvent
+	var pageToken []byte
+	var nextEventID int64 = common.EmptyEventID
+
+	// Continue paginating until we're done.
+	for {
+		events, _, tok, err := p.ReadFullPageEventsReverse(context.Background(), em, &p.ReadHistoryBranchReverseRequest{
+			ShardID:                1,
+			BranchToken:            branchToken,
+			MaxEventID:             nextEventID,
+			LastFirstTransactionID: lastFirstTxnID,
+			PageSize:               100,
+			NextPageToken:          pageToken,
+		})
+		if err != nil {
+			return allEvents, err
+		}
+
+		allEvents = append(allEvents, events...)
+		pageToken = tok
+
+		// GetHistoryReverse in get_history_util.go computes the continuation token NextEventId.
+		if len(events) > 0 {
+			nextEventID = events[len(events)-1].EventId - 1
+		}
+
+		// Stop pagination when NextEventId drops below FirstEventId.
+		if nextEventID < common.FirstEventID {
+			break
+		}
+
+		// GetWorkflowExecutionHistoryReverse zeros out lastFirstTxnID on paginated calls. It's
+		// only populated on the initial call.
+		lastFirstTxnID = 0
+	}
+	return allEvents, nil
 }
