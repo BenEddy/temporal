@@ -924,7 +924,8 @@ type (
 	// ForkHistoryBranchResponse is the response to ForkHistoryBranchRequest
 	ForkHistoryBranchResponse struct {
 		// branchToken to represent the new branch
-		NewBranchToken []byte
+		NewBranchToken      []byte
+		LastFirstEventTxnId int64
 	}
 
 	// CompleteForkBranchRequest is used to complete forking

@@ -98,7 +98,7 @@ func (r *resetterImpl) resetWorkflow(
 		return nil, err
 	}
 
-	resetBranchToken, err := r.getResetBranchToken(ctx, baseBranchToken, baseLastEventID)
+	resetBranchToken, resetLastFirstEventTxnID, err := r.getResetBranchToken(ctx, baseBranchToken, baseLastEventID)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +129,9 @@ func (r *resetterImpl) resetWorkflow(
 	rebuildMutableState.AddHistorySize(rebuildStats.HistorySize)
 	rebuildMutableState.AddExternalPayloadSize(rebuildStats.ExternalPayloadSize)
 	rebuildMutableState.AddExternalPayloadCount(rebuildStats.ExternalPayloadCount)
+	if resetLastFirstEventTxnID != 0 {
+		rebuildMutableState.GetExecutionInfo().LastFirstEventTxnId = resetLastFirstEventTxnID
+	}
 
 	if err := rebuildMutableState.RefreshExpirationTimeoutTask(ctx); err != nil {
 		return nil, err
@@ -205,7 +208,7 @@ func (r *resetterImpl) getResetBranchToken(
 	ctx context.Context,
 	baseBranchToken []byte,
 	baseLastEventID int64,
-) ([]byte, error) {
+) ([]byte, int64, error) {
 
 	// fork a new history branch
 	shardID := r.shard.GetShardID()
@@ -218,8 +221,8 @@ func (r *resetterImpl) getResetBranchToken(
 		NewRunID:        r.newRunID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return resp.NewBranchToken, nil
+	return resp.NewBranchToken, resp.LastFirstEventTxnId, nil
 }
